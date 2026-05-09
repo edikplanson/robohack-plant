@@ -97,6 +97,11 @@ Resources provided: 3D printers, mechanical workshop, soldering stations, GPU co
 
 Built with love, sleep deprivation, and too much EPFL coffee.
 
+- Edik Planson
+- Léo Guerin
+- Fabien Pieretti
+- Chloé Muliva
+
 ---
 
 ## License
