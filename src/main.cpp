@@ -12,6 +12,8 @@
 #define LED2_R        18
 #define LED2_G        19
 #define LED2_B        20
+#define BAND_R        35
+#define BAND_B        36
 
 OneWire oneWire(TEMP_PIN);
 DallasTemperature tempSensor(&oneWire);
@@ -28,6 +30,11 @@ void setColorLED2(uint8_t r, uint8_t g, uint8_t b) {
   analogWrite(LED2_B, b);
 }
 
+void setColorBand(uint8_t r, uint8_t b) {
+  analogWrite(BAND_R, 255 - r);  // common anode: 0V = on, 5V = off
+  analogWrite(BAND_B, 255 - b);
+}
+
 void setup() {
   Serial.begin(115200);
   analogReadResolution(12);
@@ -39,7 +46,10 @@ void setup() {
   pinMode(LED2_R, OUTPUT);
   pinMode(LED2_G, OUTPUT);
   pinMode(LED2_B, OUTPUT);
+  pinMode(BAND_R, OUTPUT);
+  pinMode(BAND_B, OUTPUT);
   tempSensor.begin();
+  tempSensor.setResolution(9);
   tempSensor.setWaitForConversion(false);
   tempSensor.requestTemperatures();
 }
@@ -83,6 +93,10 @@ void loop() {
     mg = (uint8_t)(165 + 90 * t);
   }
   setColorLED2(mr, mg, 0);
+
+  // LED band: full purple below 85% light, fully off at 85%+
+  uint8_t bandIntensity = (lux_pct < 85) ? 255 : 0;
+  setColorBand(bandIntensity, bandIntensity);
 
   Serial.printf(
     "Light: %d%% | Temp: %.1f°C [%s] | Moisture: %d%% | %s\n",
