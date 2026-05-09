@@ -2,10 +2,12 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+// true = human-readable prototyping output, false = compact pyserial format
+const bool PROTO_MODE = true;
+
 #define LDR_PIN       4
 #define TEMP_PIN      5
 #define MOISTURE_A0   6
-#define MOISTURE_D0   7
 #define LED1_R        16
 #define LED1_G        15
 #define LED1_B        17
@@ -39,7 +41,6 @@ void setup() {
   Serial.begin(115200);
   analogReadResolution(12);
   analogSetAttenuation(ADC_11db);
-  pinMode(MOISTURE_D0, INPUT);
   pinMode(LED1_R, OUTPUT);
   pinMode(LED1_G, OUTPUT);
   pinMode(LED1_B, OUTPUT);
@@ -66,7 +67,6 @@ void loop() {
   // Soil moisture
   int moistureRaw = analogRead(MOISTURE_A0);
   int moisture_pct = constrain(map(moistureRaw, 4095, 0, 0, 100), 0, 100);
-  bool isDry = digitalRead(MOISTURE_D0);
 
   // LED1: temperature
   const char* tempColor;
@@ -86,22 +86,29 @@ void loop() {
   if (moisture_pct <= 50) {
     float t = moisture_pct / 50.0;
     mr = 255;
-    mg = (uint8_t)(165 * t);
+    mg = (uint8_t)(255 * t);
   } else {
     float t = (moisture_pct - 50) / 50.0;
     mr = (uint8_t)(255 * (1.0 - t));
-    mg = (uint8_t)(165 + 90 * t);
+    mg = 255;
   }
   setColorLED2(mr, mg, 0);
 
-  // LED band: full purple below 85% light, fully off at 85%+
-  uint8_t bandIntensity = (lux_pct < 85) ? 255 : 0;
+  // LED band: full purple below 80% light, fully off at 85%+
+  uint8_t bandIntensity = (lux_pct < 80) ? 255 : 0;
   setColorBand(bandIntensity, bandIntensity);
 
-  Serial.printf(
-    "Light: %d%% | Temp: %.1f°C [%s] | Moisture: %d%% | %s\n",
-    lux_pct, tempC, tempColor, moisture_pct, isDry ? "DRY" : "WET"
-  );
+  if (PROTO_MODE) {
+    Serial.printf(
+      "Light: %d%% | Temp: %.1f°C [%s] | Moisture: %d%%\n",
+      lux_pct, tempC, tempColor, moisture_pct
+    );
+  } else {
+    // FORMAT: light(%),temp(°C),moisture(%)
+    // Fields: int, float(1dp), int
+    // Example: 90,26.5,44
+    Serial.printf("%d,%.1f,%d\n", lux_pct, tempC, moisture_pct);
+  }
 
   delay(500);
 }
