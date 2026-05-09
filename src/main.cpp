@@ -3,7 +3,7 @@
 #include <DallasTemperature.h>
 
 // true = human-readable prototyping output, false = compact pyserial format
-const bool PROTO_MODE = true;
+const bool PROTO_MODE = false;
 
 #define LDR_PIN       4
 #define TEMP_PIN      5
@@ -56,6 +56,9 @@ void setup() {
 }
 
 void loop() {
+  static int oldTime=millis();
+  int newTime=millis();
+  if (newTime-oldTime>500){
   // Luminosity
   int ldrRaw = analogRead(LDR_PIN);
   int lux_pct = constrain(map(ldrRaw, 4095, 0, 0, 100), 0, 100);
@@ -109,6 +112,7 @@ void loop() {
     // Example: 90,26.5,44
     Serial.printf("%d,%.1f,%d\n", lux_pct, tempC, moisture_pct);
   }
+  oldTime=newTime;
+  }
 
-  delay(500);
 }
